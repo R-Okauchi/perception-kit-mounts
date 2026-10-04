@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="description" content="油圧ショベル zx200 とクローラダンプ mst110cr の機体モデルに、後付けの知覚キット (LiDAR・IMU・GNSS) の治具と留め具を載せた 3D。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1l6 3.5v7L8 15l-6-3.5v-7z' fill='%23c8621d'/%3E%3Cpath d='M8 8l6-3.5M8 8v7M8 8L2 4.5' stroke='%23fff' stroke-width='1.2' fill='none'/%3E%3C/svg%3E">
+<style>[hidden]{display:none!important} img{max-width:100%}</style>
+<title>知覚キットの取付位置</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap">
+<style>
+:root {
+  --ground: #eef0ec;
+  --panel: #f8f9f6;
+  --ink: #1c2224;
+  --muted: #5b6569;
+  --rule: #d3d8d2;
+  --viewport: #e2e6e0;
+  --floor: #d3d9cf;
+  --grid: #b9c2b6;
+  --focus: #1f5fa8;
+  --m-tracks: #4b5155;
+  --m-body: #cdc5b3;
+  --m-front: #b6ad99;
+  --m-kit: #98a2aa;
+  --m-fix: #c8621d;
+  --m-sensor: #23507a;
+  --m-rail: #e0a800;
+  --ok: #2e7d4f;
+  --check: #8a5a00;
+  --sans: "IBM Plex Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #111518; --panel: #182024; --ink: #e4e8e9; --muted: #9aa5aa; --rule: #2a343a;
+    --viewport: #0d1113; --floor: #1a2124; --grid: #2c3836; --focus: #7fb2ec;
+    --m-tracks: #3a4044; --m-body: #8c8577; --m-front: #776f61; --m-kit: #aeb7be;
+    --m-fix: #f08a3c; --m-sensor: #7fb0e0; --m-rail: #ffd24a; --ok: #5cc08a; --check: #e0ad48;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #111518; --panel: #182024; --ink: #e4e8e9; --muted: #9aa5aa; --rule: #2a343a;
+  --viewport: #0d1113; --floor: #1a2124; --grid: #2c3836; --focus: #7fb2ec;
+  --m-tracks: #3a4044; --m-body: #8c8577; --m-front: #776f61; --m-kit: #aeb7be;
+  --m-fix: #f08a3c; --m-sensor: #7fb0e0; --m-rail: #ffd24a; --ok: #5cc08a; --check: #e0ad48;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.6 var(--sans);
+  padding-inline: 16px; padding-block: 16px 24px;
+}
+.wrap { max-width: 1440px; margin: 0 auto; display: grid; gap: 12px; }
+header { display: grid; gap: 4px; }
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+h1 { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); font-size: 13px; max-width: 80ch; }
+.lede b { color: var(--m-fix); font-weight: 500; }
+.lede em { color: var(--m-sensor); font-style: normal; font-weight: 500; }
+.switch { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--panel); }
+.switch button {
+  font: 500 13px/1 var(--sans); color: var(--ink); background: none; border: 0; padding: 9px 14px; cursor: pointer;
+  display: grid; gap: 3px; text-align: left;
+}
+.switch button + button { border-left: 1px solid var(--rule); }
+.switch button small { font: 400 11px/1 var(--sans); color: var(--muted); }
+.switch button[aria-pressed="true"] { background: color-mix(in srgb, var(--m-fix) 16%, transparent); }
+button:focus-visible, label:has(input:focus-visible), a:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 12px; align-items: start; }
+.stage {
+  position: relative; height: min(74vh, 780px); min-height: 420px; overflow: hidden;
+  background: var(--viewport); border: 1px solid var(--rule); border-radius: 6px;
+}
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.bar {
+  position: absolute; top: 8px; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: space-between;
+  pointer-events: none;
+}
+.bar > div { display: flex; flex-wrap: wrap; gap: 6px; pointer-events: auto; }
+.bar button, .bar label {
+  font: 500 12px/1 var(--sans); color: var(--ink); background: color-mix(in srgb, var(--panel) 90%, transparent);
+  border: 1px solid var(--rule); border-radius: 4px; padding: 6px 9px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center;
+}
+.bar button[aria-pressed="true"] { border-color: var(--m-fix); box-shadow: inset 0 -2px 0 var(--m-fix); }
+.bar input { margin: 0; accent-color: var(--m-fix); }
+.legend {
+  position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px;
+  background: color-mix(in srgb, var(--panel) 88%, transparent); padding: 5px 9px; border-radius: 4px; pointer-events: none;
+}
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.legend .hint { margin-left: auto; color: var(--muted); }
+.loading {
+  position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; pointer-events: none;
+}
+.labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.labels svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.labels line { stroke: var(--ink); stroke-opacity: .55; stroke-width: 1; }
+.dot {
+  position: absolute; z-index: 1; left: 0; top: 0; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%;
+  border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--ink);
+}
+.dot.sensor { background: var(--m-sensor); }
+.dot.fix { background: var(--m-fix); }
+.tag {
+  position: absolute; z-index: 2; left: 0; top: 0; font-size: 11.5px; line-height: 1.25; white-space: nowrap;
+  background: color-mix(in srgb, var(--panel) 92%, transparent); border: 1px solid var(--rule); border-radius: 3px; padding: 2px 6px;
+}
+.tag.fix { border-color: color-mix(in srgb, var(--m-fix) 65%, var(--rule)); }
+.tag.sensor { border-color: color-mix(in srgb, var(--m-sensor) 45%, var(--rule)); }
+aside { display: grid; gap: 10px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; display: grid; gap: 8px; }
+.card h2 { margin: 0; font-size: 15px; line-height: 1.35; text-wrap: balance; }
+.card p { margin: 0; font-size: 12.5px; color: var(--muted); }
+.items { display: grid; margin: 0; padding: 0; list-style: none; }
+.items > li { display: grid; gap: 4px; padding: 9px 0; border-top: 1px solid var(--rule); }
+.items > li:first-child { border-top: 0; padding-top: 2px; }
+.it-head { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; justify-content: space-between; }
+.it-head b { font-size: 13px; font-weight: 700; }
+.it-head .where { font-family: var(--mono); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.it-body { font-size: 12.5px; }
+.checks { display: grid; gap: 4px; margin: 2px 0 0; padding: 0; list-style: none; font-size: 12px; }
+.checks li { display: grid; grid-template-columns: 7.6em 1fr; gap: 6px; align-items: baseline; }
+.pill {
+  justify-self: start; font: 500 10.5px/1.6 var(--sans); padding: 0 6px; border-radius: 999px; white-space: nowrap;
+  border: 1px solid currentColor;
+}
+.pill.ok { color: var(--ok); }
+.pill.check { color: var(--check); }
+.pill.cond { color: var(--check); border-style: dashed; }
+.keys { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11.5px; color: var(--muted); }
+.keys span { display: inline-flex; gap: 5px; align-items: baseline; }
+.foot { font-size: 11.5px; color: var(--muted); }
+.foot a { color: inherit; }
+.num { font-family: var(--mono); font-size: 11px; overflow-wrap: anywhere; }
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .stage { height: 62vh; }
+}
+@media (max-width: 560px) {
+  .stage { min-height: 380px; }
+  .legend .hint { display: none; }
+  .tag { font-size: 10.5px; }
+  .checks li { grid-template-columns: 1fr; gap: 1px; }
+}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="top">
+      <h1>知覚キットの取付位置</h1>
+      <div class="switch" role="group" aria-label="機体">
+        <button type="button" id="m-zx200" data-machine="zx200" aria-pressed="true">zx200<small>油圧ショベル・Airy fr つき</small></button>
+        <button type="button" id="m-mst110cr" data-machine="mst110cr" aria-pressed="false">mst110cr<small>クローラダンプ</small></button>
+      </div>
+    </div>
+    <p class="lede">機体モデル (OperaSim、走行姿勢) に、CAD の治具とセンサを決めた取付位置で載せたもの。<b>橙が機体への留め具</b>、<em>青がセンサ</em>。
+      位置・干渉・可動部・見え方はモデル上で確かめてある。留め具が実際につかむ相手 (屋根の縁・手すりの径・鋼板) はモデルに無いので、C2 の写真と G1 の現物で決まる。まだ実機には何も付けていない。</p>
+  </header>
+
+  <div class="layout">
+    <section class="stage" id="stage" aria-label="3D 表示">
+      <canvas id="view" aria-label="機体とキットの 3D モデル。ドラッグで回転、ホイールかピンチで拡大、右ドラッグか 2 本指で移動"></canvas>
+      <div class="labels" id="labels"><svg id="leaders" aria-hidden="true"></svg></div>
+      <div class="loading" id="loading">読み込み中…</div>
+      <div class="bar">
+        <div id="presets" role="group" aria-label="視点"></div>
+        <div>
+          <label for="t-ghost"><input type="checkbox" id="t-ghost">機体を透かす</label>
+          <label for="t-labels"><input type="checkbox" id="t-labels" checked>ラベル</label>
+        </div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <aside id="aside" aria-live="polite"></aside>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script type="application/json" id="mesh-index">{"zx200":{"machine":"zx200","file":"meshes/zx200.bin","bytes":3304854,"center":[0.1990964412689209,-0.014576537250518884,2.9298917872484775],"half":[3.0950634942779542,1.7887514696846007,4.0470798853589445],"groups":[{"key":"tracks","offset":0,"count":35814},{"key":"body","offset":214884,"count":46857},{"key":"front","offset":496026,"count":14010},{"key":"kit","offset":580086,"count":283392},{"key":"fix","offset":2280438,"count":141744},{"key":"sensor","offset":3130902,"count":28704},{"key":"rail","offset":3303126,"count":288}],"labels":[{"text":"屋根 LiDAR Mid-360S (倒立)","kind":"sensor","pos":[0.6,0.91,2.392]},{"text":"GNSS アンテナ A","kind":"sensor","pos":[1.2,1.26,2.19]},{"text":"GNSS アンテナ B","kind":"sensor","pos":[-0.4,1.26,2.19]},{"text":"IMU (LiDAR の座の上)","kind":"sensor","pos":[0.5549929670372761,0.8699023920059404,2.462563781081296]},{"text":"GNSS バーの支持 ×3 (φ32 クランプ)","kind":"fix","pos":[0.9999997084447254,1.2600104023407412,2.1289598185354963]},{"text":"Airy fr (倒立、yaw −90°)","kind":"sensor","pos":[-0.33,-1.124,1.434]},{"text":"手すりの中段をつかむクランプ","kind":"fix","pos":[-0.3299979390045138,-1.0039598185500433,1.5273168329874396]},{"text":"屋根縁クランプ (C 爪 ×4)","kind":"fix","pos":[0.545,0.98,2.033]}],"ground_z":-1.15,"triangles":183603},"mst110cr":{"machine":"mst110cr","file":"meshes/mst110cr.bin","bytes":2952144,"center":[0.10233283042907715,-0.09352493286132812,0.762284994125288],"half":[2.9965980516204835,1.7984660135040282,1.7622859941254443],"groups":[{"key":"tracks","offset":0,"count":36168},{"key":"body","offset":217008,"count":30228},{"key":"front","offset":398376,"count":3048},{"key":"kit","offset":416664,"count":246336},{"key":"fix","offset":1894680,"count":147924},{"key":"sensor","offset":2782224,"count":28320}],"labels":[{"text":"屋根 LiDAR Mid-360S (倒立)","kind":"sensor","pos":[2.6,0.92,2.375]},{"text":"GNSS アンテナ A","kind":"sensor","pos":[2.97,1.17,2.25]},{"text":"GNSS アンテナ B","kind":"sensor","pos":[1.47,1.17,2.25]},{"text":"IMU (LiDAR の座の上)","kind":"sensor","pos":[2.5549929670372906,0.8799023920059033,2.445563781081202]},{"text":"GNSS バーの支持 ×3 (φ32 クランプ)","kind":"fix","pos":[2.6199943482454215,1.1700066687154622,2.1889598185052974]},{"text":"磁石 ×4 (キャブ屋根)","kind":"fix","pos":[2.47,0.99,2.085]},{"text":"手すりクランプ ×2 (磁石と併用)","kind":"fix","pos":[2.37,0.85,2.07]}],"ground_z":-0.98,"triangles":164008}}</script>
+<script>
+(function () {
+  "use strict";
+  const INDEX = JSON.parse(document.getElementById("mesh-index").textContent);
+
+  // What the twin settled (ok), what holds only with a part made to the measured size (cond), what the site decides (check).
+  const PILL = { ok: "モデルで確認", cond: "条件付き", check: "C2・G1 で確認" };
+  const MACHINES = {
+    zx200: {
+      title: "zx200: キャブ屋根に LiDAR・IMU・GNSS、右の手すりに Airy",
+      lede: "屋根の治具は防振ゴムの上のキャブに一体で載せる (LiDAR・IMU・アンテナの間にキャブの揺れを入れない)。",
+      front: "作業機 (走行姿勢: ブームを上げて畳む)",
+      presets: [["all", "全体"], ["roof", "屋根の治具"], ["airy", "Airy fr"], ["gnss", "GNSS バー"]],
+      items: [
+        { name: "屋根 LiDAR と IMU", where: "(0.60, 0.91, 2.39) 地上 3.54 m",
+          body: "Mid-360S を倒立でマストの先に、IMU は LiDAR の座の上に金属で剛結。マストは後ろ向き (元の CAD の向き −17.5° だとブームの振りで 0.04 m まで近づく)。",
+          checks: [["ok", "ブーム・アーム・バケットの可動範囲全体で、GNSS バーを含む治具まで 0.15 m 以上 (証明。いちばん近い所で 0.64 m)"]] },
+        { name: "屋根縁クランプ (C 爪 ×4)", where: "横桟 2 本・間隔 140 mm",
+          body: "固定した上爪のゴムを屋根の上面に当て、下からスピンドルの押し足で縁を挟む。縁の厚さ 8–35 mm、爪の差込み 30 mm 以内、下側に工具が届くこと。",
+          checks: [["ok", "4 つの上爪が屋根の平らな所に載る (1 平面、傾き 0.04°、受け座の水平調整 ±3° の内)。爪も横桟も車体にめり込まない"],
+                   ["check", "挟める縁はモデルの屋根に無い。耐荷重のある縁が写真で無ければ、手すり／デッキの構成に切り替える (デッキ用に磁石 4 個を持参)"]] },
+        { name: "GNSS バー (基線 1.6 m)", where: "A (1.20, 1.26) / B (−0.40, 1.26)",
+          body: "LiDAR の左横に、マストとは別の 3 点で支える (バーの中央と、各アンテナから 200 mm 内側)。支持は φ32 のクランプで短い柱か手すりをつかむ。",
+          checks: [["ok", "3 か所とも足の真下 5–7 cm に屋根の面 (短い柱で届く)。空の遮蔽 A 18 %・B 12 % (ブームを上げたとき)"],
+                   ["check", "柱を立てる所・手すりの位置と径。3 点が LiDAR と同じキャブの構造に乗るか"]] },
+        { name: "Airy fr (RoboSense)", where: "(−0.33, −1.12, 1.43) 地上 2.58 m",
+          body: "右の手すりの前後に走る中段を、クレードル背面のクランプでつかむ。センサは倒立・+X が右 (yaw −90°)、手すりの外側 13 cm・下 9 cm に下がる。",
+          checks: [["ok", "車体まで缶 0.21 m・クレードル 0.11 m。作業機の可動範囲全体で 0.15 m 以上 (証明)。管に沿って ±5 cm ずらしても同じ"],
+                   ["ok", "8 m 以内の地面が屋根 LiDAR と合わせて見える割合: 右 98 %、右前 98 %、前右 82 %"],
+                   ["cond", "モデルの中段は φ41 で、キットのクランプ (φ25・32・38) では持てない。C2 で実径を測り、その径の半割を作る"],
+                   ["check", "手すりの横の 1 次モードが 50 Hz を超えるか (打撃試験)。見積りは約 80 Hz、上段だと約 25 Hz で不可"]] }
+      ]
+    },
+    mst110cr: {
+      title: "mst110cr: キャブ屋根の前寄りに LiDAR・IMU・GNSS",
+      lede: "旋回上部のキャブ屋根に載せる。荷台には何も付けない (ダンプで動く)。",
+      front: "荷台・ダンプのシリンダ",
+      presets: [["all", "全体"], ["roof", "屋根の治具"], ["gnss", "GNSS バー"]],
+      items: [
+        { name: "屋根 LiDAR と IMU", where: "(2.60, 0.92, 2.38) 地上 3.36 m",
+          body: "前へ走る運搬車なので、前方の見えない範囲が短い前寄りに (前方は 4.9–5.6 m 先の地面から見える)。",
+          checks: [["ok", "荷台・ダンプのシリンダとロッドの可動範囲全体で 0.15 m 以上 (証明。いちばん近い所で 0.23 m)"]] },
+        { name: "磁石 ×4 + 手すりクランプ ×2", where: "レール 2 本・間隔 140 mm",
+          body: "360 mm のレール 2 本にポット磁石 4 個 (X ±100・Y ±70 mm)、中央で φ32 の手すりクランプ 2 個を併用。磁石だけでは持たせず、公称吸着力 30 kg は使用荷重に数えない。",
+          checks: [["ok", "4 個の磁石の座が屋根の平らな所に載る (傾き 0.37°、±3° の内)。めり込まない"],
+                   ["check", "屋根が鋼板か・板厚・塗装・曲率。2 個の手すりクランプがつかむ手すりの位置と径"]] },
+        { name: "GNSS バー (基線 1.5 m)", where: "A (2.97, 1.17) / B (1.47, 1.17)",
+          body: "LiDAR の横、荷台の前壁を 0.15 m 以上避けて前寄りに。前の支持はアンテナ A から 350 mm 内側 (バーの 1 次モードの見積り 58 Hz、目標 50 Hz)。",
+          checks: [["ok", "空の遮蔽 A 1.5 %・B 7 %。後ろの 2 か所は足の真下 7–8 cm に屋根の面"],
+                   ["check", "前の支持は屋根の前縁の突起 (モデルで幅 4 cm・高さ 8 cm) に足の 86 % が乗る。実在するか・強度・確実な締結"]] }
+      ]
+    }
+  };
+
+  // ── three.js scene ──
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const canvas = document.getElementById("view");
+  const stage = document.getElementById("stage");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 400);
+  camera.up.set(0, 0, 1);                                   // the hub frame: x forward, y left, z up
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = !reduced;
+  controls.dampingFactor = 0.12;
+  controls.screenSpacePanning = true;
+  controls.maxPolarAngle = Math.PI * 0.55;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f86, 0.75));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.75);
+  sun.position.set(6, -8, 12);
+  scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.25);
+  fill.position.set(-8, 6, 4);
+  scene.add(fill);
+
+  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const TOKEN = { tracks: "--m-tracks", body: "--m-body", front: "--m-front", kit: "--m-kit", fix: "--m-fix", sensor: "--m-sensor", rail: "--m-rail" };
+  const materials = {};
+  Object.keys(TOKEN).forEach((k) => {
+    materials[k] = new THREE.MeshStandardMaterial({
+      flatShading: true, roughness: k === "kit" || k === "fix" ? 0.45 : 0.8, metalness: k === "kit" ? 0.35 : 0.05,
+      transparent: k === "rail", opacity: k === "rail" ? 0.6 : 1, side: THREE.DoubleSide
+    });
+  });
+
+  let current = null;
+  function applyTheme() {
+    Object.keys(TOKEN).forEach((k) => materials[k].color.set(css(TOKEN[k]) || "#999999"));
+    renderer.setClearColor(new THREE.Color(css("--viewport") || "#e2e6e0"), 1);
+    if (current) {
+      current.floor.material.color.set(css("--floor"));
+      current.grid.material.color.set(css("--grid"));
+    }
+    drawLegend();
+  }
+
+  const ghost = document.getElementById("t-ghost");
+  function applyGhost() {
+    ["tracks", "body", "front"].forEach((k) => {
+      materials[k].transparent = ghost.checked;
+      materials[k].opacity = ghost.checked ? 0.22 : 1;
+      materials[k].depthWrite = !ghost.checked;
+      materials[k].needsUpdate = true;
+    });
+  }
+  ghost.addEventListener("change", applyGhost);
+
+  const cache = {};
+  async function build(machine) {
+    const info = INDEX[machine];
+    const res = await fetch(info.file);
+    if (!res.ok) throw new Error(`${info.file} (${res.status})`);
+    let buf;
+    if (info.file.endsWith(".txt")) {                      // base64 text where binary files are not served
+      const b64 = atob((await res.text()).trim());
+      const bytes = new Uint8Array(b64.length);
+      for (let i = 0; i < b64.length; i++) bytes[i] = b64.charCodeAt(i);
+      buf = bytes.buffer;
+    } else {
+      buf = await res.arrayBuffer();
+    }
+    const q = new Int16Array(buf);                         // Int16, little-endian, quantised over the machine's box
+    const group = new THREE.Group();
+    const [cx, cy, cz] = info.center, [hx, hy, hz] = info.half;
+    info.groups.forEach((g) => {
+      const src = q.subarray(g.offset / 2, g.offset / 2 + g.count * 3);
+      const pos = new Float32Array(src.length);
+      for (let i = 0; i < src.length; i += 3) {
+        pos[i] = src[i] / 32767 * hx + cx;
+        pos[i + 1] = src[i + 1] / 32767 * hy + cy;
+        pos[i + 2] = src[i + 2] / 32767 * hz + cz;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      const mesh = new THREE.Mesh(geo, materials[g.key]);
+      mesh.renderOrder = g.key === "rail" ? 2 : 0;
+      group.add(mesh);
+    });
+    // the ground under the tracks: a 1 m grid, and an arrow for the machine's forward
+    const gz = info.ground_z;
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 }));
+    floor.position.set(0, 0, gz - 0.003);
+    group.add(floor);
+    const grid = new THREE.GridHelper(40, 40);
+    grid.rotation.x = Math.PI / 2;
+    grid.position.set(0, 0, gz);
+    grid.material.vertexColors = false;
+    group.add(grid);
+    group.add(new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(4.4, 0, gz + 0.01), 1.4, 0x6b7376, 0.35, 0.22));
+    return { group, info, floor, grid };
+  }
+
+  function anchor(info, prefix) {
+    const l = info.labels.find((x) => x.text.startsWith(prefix));
+    return l ? new THREE.Vector3(...l.pos) : null;
+  }
+  let flight = null;
+  function view(preset, instant) {
+    const info = current.info;
+    let target, offset;
+    if (preset === "roof") {
+      target = anchor(info, "屋根 LiDAR"); target.z -= 0.15; offset = new THREE.Vector3(2.3, 2.5, 1.7);
+    } else if (preset === "airy") {
+      target = anchor(info, "Airy"); offset = new THREE.Vector3(1.1, -2.5, 0.8);
+    } else if (preset === "gnss") {
+      target = anchor(info, "GNSS アンテナ A").add(anchor(info, "GNSS アンテナ B")).multiplyScalar(0.5);
+      offset = new THREE.Vector3(0.4, 3.2, 1.9);
+    } else {
+      const [cx, cy, cz] = info.center, [hx, hy, hz] = info.half;
+      const top = cz + hz;
+      target = new THREE.Vector3(cx, cy, (info.ground_z + top) / 2);
+      const r = Math.hypot(hx, hy, (top - info.ground_z) / 2);
+      const half = THREE.MathUtils.degToRad(camera.fov / 2);
+      const fit = Math.min(Math.sin(half), Math.sin(Math.atan(Math.tan(half) * camera.aspect)));
+      offset = new THREE.Vector3(7.0, -8.6, 5.4).normalize().multiplyScalar(0.92 * r / fit);
+    }
+    const to = { target, pos: target.clone().add(offset) };
+    if (instant || reduced) {
+      controls.target.copy(to.target); camera.position.copy(to.pos); controls.update(); flight = null;
+    } else {
+      flight = { t0: performance.now(), dur: 650, fromT: controls.target.clone(), fromP: camera.position.clone(), to };
+    }
+    document.querySelectorAll("#presets button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.preset === preset)));
+  }
+  canvas.addEventListener("pointerdown", () => {
+    flight = null;
+    document.querySelectorAll("#presets button").forEach((b) => b.setAttribute("aria-pressed", "false"));
+  });
+
+  // ── labels: a dot on the part, its tag pushed clear of the others, a leader between ──
+  const labelsEl = document.getElementById("labels");
+  const leaders = document.getElementById("leaders");
+  const showLabels = document.getElementById("t-labels");
+  const SVGNS = "http://www.w3.org/2000/svg";
+  let labels = [];
+  function makeLabels(info) {
+    labels.forEach((L) => { L.dot.remove(); L.tag.remove(); L.line.remove(); });
+    labels = info.labels.map((l) => {
+      const dot = document.createElement("i");
+      dot.className = "dot " + l.kind;
+      const tag = document.createElement("span");
+      tag.className = "tag " + l.kind;
+      tag.textContent = l.text;
+      const line = document.createElementNS(SVGNS, "line");
+      labelsEl.append(dot, tag);
+      leaders.append(line);
+      return { dot, tag, line, p: new THREE.Vector3(...l.pos), w: 0, h: 0 };
+    });
+  }
+  showLabels.addEventListener("change", () => { labelsEl.hidden = !showLabels.checked; });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => labels.forEach((L) => { L.w = 0; }));
+  const tmp = new THREE.Vector3();
+  function placeLabels() {
+    if (labelsEl.hidden) return;
+    const W = stage.clientWidth, H = stage.clientHeight;
+    const shown = [];
+    labels.forEach((L) => {
+      tmp.copy(L.p).project(camera);
+      const vis = tmp.z < 1 && Math.abs(tmp.x) < 1.05 && Math.abs(tmp.y) < 1.05;
+      L.dot.hidden = L.tag.hidden = !vis;
+      L.line.style.display = vis ? "" : "none";
+      if (!vis) return;
+      L.ax = (tmp.x + 1) / 2 * W; L.ay = (1 - tmp.y) / 2 * H;
+      if (!L.w) { L.w = L.tag.offsetWidth; L.h = L.tag.offsetHeight; }
+      shown.push(L);
+    });
+    const clusters = [];
+    shown.forEach((L) => {
+      const near = clusters.filter((c) => c.some((M) => Math.hypot(M.ax - L.ax, M.ay - L.ay) < 120));
+      near.forEach((c) => clusters.splice(clusters.indexOf(c), 1));
+      clusters.push([].concat(...near, [L]));
+    });
+    const placed = [];
+    clusters.forEach((c) => {
+      c.sort((a, b) => a.ay - b.ay);
+      const right = Math.max(...c.map((L) => L.ax)) + 28, left = Math.min(...c.map((L) => L.ax)) - 28;
+      const wmax = Math.max(...c.map((L) => L.w));
+      const onRight = right + wmax <= W - 6 || left - wmax < 6;
+      const total = c.reduce((sum, L) => sum + L.h + 4, -4);
+      let y = c.reduce((sum, L) => sum + L.ay, 0) / c.length - total / 2;
+      y = Math.min(Math.max(y, 44), H - 40 - total);          // clear of the view buttons and the legend
+      c.forEach((L) => {
+        const x = Math.min(Math.max(6, onRight ? right : left - L.w), W - 6 - L.w);
+        for (let pass = 0, moved = true; moved && pass < 24; pass++) {
+          moved = false;
+          for (const r of placed) {
+            if (x < r.x + r.w + 4 && x + L.w + 4 > r.x && y < r.y + r.h + 3 && y + L.h + 3 > r.y) { y = r.y + r.h + 3; moved = true; }
+          }
+        }
+        placed.push({ x, y, w: L.w, h: L.h });
+        L.tag.style.transform = `translate(${x}px, ${y}px)`;
+        L.dot.style.transform = `translate(${L.ax}px, ${L.ay}px)`;
+        L.line.setAttribute("x1", L.ax); L.line.setAttribute("y1", L.ay);
+        L.line.setAttribute("x2", onRight ? x : x + L.w); L.line.setAttribute("y2", y + L.h / 2);
+        y += L.h + 4;
+      });
+    });
+  }
+
+  // ── side panel and legend ──
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function drawLegend() {
+    const m = MACHINES[current ? current.info.machine : "zx200"];
+    const rows = [["--m-fix", "機体への留め具"], ["--m-sensor", "センサ"], ["--m-kit", "キットの構造"],
+                  ["--m-body", "上部旋回体"], ["--m-front", m.front], ["--m-tracks", "足回り"]];
+    if (current && current.info.machine === "zx200") rows.splice(2, 0, ["--m-rail", "Airy がつかむ手すりの中段"]);
+    const legend = document.getElementById("legend");
+    legend.textContent = "";
+    rows.forEach(([v, t]) => {
+      const s = el("span");
+      const sw = el("span", "sw");
+      sw.style.background = `var(${v})`;
+      s.append(sw, document.createTextNode(t));
+      legend.append(s);
+    });
+    legend.append(el("span", "hint", "地面の矢印が機体の前"));
+  }
+  function drawAside(machine) {
+    const m = MACHINES[machine];
+    const aside = document.getElementById("aside");
+    aside.textContent = "";
+    const card = el("div", "card");
+    card.append(el("h2", null, m.title), el("p", null, m.lede));
+    const keys = el("div", "keys");
+    Object.keys(PILL).forEach((k) => {
+      const s = el("span");
+      s.append(el("span", "pill " + k, PILL[k]),
+               document.createTextNode({ ok: "判定が通った", cond: "実径の部品を作れば成り立つ", check: "現地で決まる (C2 = 事前の写真と寸法、G1 = 取付けて測る)" }[k]));
+      keys.append(s);
+    });
+    card.append(keys);
+    const ul = el("ul", "items");
+    m.items.forEach((it) => {
+      const li = el("li");
+      const hd = el("div", "it-head");
+      hd.append(el("b", null, it.name), el("span", "where", it.where));
+      const cl = el("ul", "checks");
+      it.checks.forEach(([state, text]) => {
+        const c = el("li");
+        c.append(el("span", "pill " + state, PILL[state]), el("span", null, text));
+        cl.append(c);
+      });
+      li.append(hd, el("div", "it-body", it.body), cl);
+      ul.append(li);
+    });
+    card.append(ul);
+    const foot = el("div", "card foot");
+    foot.innerHTML = "座標は hub 系 (旋回中心、x 前・y 左・z 上) の m。機体モデルは <a href=\"https://github.com/pwri-opera/OperaSim-PhysX\" target=\"_blank\" rel=\"noopener\">OperaSim-PhysX<\/a> (© 2022 Public Works Research Institute, Japan、Apache License 2.0) の zx200・mst110cr を hub 系に移して 16 bit に量子化したもの。治具とセンサの形は自作の CAD。数値は 2026-10-03 の判定。";
+    aside.append(card, foot);
+  }
+
+  async function show(machine) {
+    document.querySelectorAll(".switch button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.machine === machine)));
+    const loading = document.getElementById("loading");
+    if (!cache[machine]) {
+      loading.hidden = false;
+      loading.textContent = `モデルを読み込み中 (${(INDEX[machine].bytes / 1e6).toFixed(1)} MB)`;
+      try { cache[machine] = await build(machine); }
+      catch (e) { loading.textContent = `モデルを読み込めませんでした: ${e.message}。ページを開き直してください`; return; }
+    }
+    loading.hidden = true;
+    if (current) scene.remove(current.group);
+    current = cache[machine];
+    scene.add(current.group);
+    const presets = document.getElementById("presets");
+    presets.textContent = "";
+    MACHINES[machine].presets.forEach(([id, text]) => {
+      const b = el("button", null, text);
+      b.type = "button"; b.dataset.preset = id; b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", () => view(id));
+      presets.append(b);
+    });
+    makeLabels(current.info);
+    drawAside(machine);
+    applyTheme();
+    view("all", true);
+    try { localStorage.setItem("kitPreviewMachine", machine); } catch (e) { /* storage unavailable */ }
+  }
+  document.querySelectorAll(".switch button").forEach((b) => b.addEventListener("click", () => show(b.dataset.machine)));
+
+  function resize() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / Math.max(h, 1);
+    camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(stage);
+  resize();
+
+  const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  function frame(now) {
+    if (flight) {
+      const t = Math.min(1, (now - flight.t0) / flight.dur), e = ease(t);
+      controls.target.lerpVectors(flight.fromT, flight.to.target, e);
+      camera.position.lerpVectors(flight.fromP, flight.to.pos, e);
+      if (t >= 1) flight = null;
+    }
+    controls.update();
+    renderer.render(scene, camera);
+    placeLabels();
+    requestAnimationFrame(frame);
+  }
+
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  if (mq.addEventListener) mq.addEventListener("change", applyTheme);
+  new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  applyTheme();
+  requestAnimationFrame(frame);
+  let start = "zx200";
+  try { const s = localStorage.getItem("kitPreviewMachine"); if (s && INDEX[s]) start = s; } catch (e) { /* storage unavailable */ }
+  show(start);
+})();
+</script>
+
+</body>
+</html>
